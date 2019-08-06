@@ -35,7 +35,14 @@
 
 `timescale 1ns/1ps
 
-module axi_xcvrlb_1 (
+module axi_xcvrlb_1 #(
+
+  // parameters
+  
+  parameter   CPLL_FBDIV = 1,
+  parameter   CPLL_FBDIV_4_5 = 5,
+  parameter   XCVR_TYPE = 2
+  )(
 
   // transceiver interface
 
@@ -50,7 +57,8 @@ module axi_xcvrlb_1 (
   input           up_rstn,
   input           up_clk,
   input           up_resetn,
-  output          up_status);
+  output          up_status,
+  output          up_pll_locked);
 
   // internal registers
 
@@ -79,7 +87,7 @@ module axi_xcvrlb_1 (
   wire            up_pll_rst_s;
   wire            up_rst_s;
   wire            up_user_ready_s;
-  wire            up_pll_locked_s;
+   (* mark_debug = "true" *) wire            up_pll_locked_s;
   wire            up_rst_done_s;
   wire            up_pn_oos_s;
   wire            up_pn_err_s;
@@ -189,6 +197,7 @@ module axi_xcvrlb_1 (
   assign up_rst_s = up_rst_cnt[3];
   assign up_user_ready_s = up_user_ready_cnt[6];
   assign up_pll_locked_s = up_rx_pll_locked_s & up_tx_pll_locked_s;
+  assign up_pll_locked = up_pll_locked_s;
   assign up_rst_done_s = up_rx_rst_done_s & up_tx_rst_done_s;
 
   always @(negedge up_rstn or posedge up_clk) begin
@@ -241,9 +250,9 @@ module axi_xcvrlb_1 (
     .d_data_status ({rx_pn_err_s, rx_pn_oos_s}));
 
   util_adxcvr_xch #(
-    .XCVR_TYPE (2),
-    .CPLL_FBDIV (2),
-    .CPLL_FBDIV_4_5 (5),
+    .XCVR_TYPE (XCVR_TYPE),
+    .CPLL_FBDIV (CPLL_FBDIV),
+    .CPLL_FBDIV_4_5 (CPLL_FBDIV_4_5),
     .TX_OUT_DIV (1),
     .TX_CLK25_DIV (10),
     .RX_OUT_DIV (1),
@@ -287,7 +296,7 @@ module axi_xcvrlb_1 (
     .up_rx_lpm_dfe_n (1'd0),
     .up_rx_rate (3'd0),
     .up_rx_sys_clk_sel (2'd0),
-    .up_rx_out_clk_sel (3'd2),
+    .up_rx_out_clk_sel (3'd2),//
     .up_rx_enb (1'd0),
     .up_rx_addr (12'd0),
     .up_rx_wr (1'd0),
@@ -301,7 +310,7 @@ module axi_xcvrlb_1 (
     .up_tx_lpm_dfe_n (1'd0),
     .up_tx_rate (3'd0),
     .up_tx_sys_clk_sel (2'd0),
-    .up_tx_out_clk_sel (3'd2),
+    .up_tx_out_clk_sel (3'd2),//
     .up_tx_enb (1'd0),
     .up_tx_addr (12'd0),
     .up_tx_wr (1'd0),
