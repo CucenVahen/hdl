@@ -18,41 +18,26 @@ current_bd_instance /spi_adc
   # DATA_WIDTH is set to 32
 
   ad_ip_instance spi_engine_execution execution
-  ad_ip_parameter execution CONFIG.DATA_WIDTH 8
+  ad_ip_parameter execution CONFIG.DATA_WIDTH 32
   ad_ip_parameter execution CONFIG.NUM_OF_CS 1
 
   ad_ip_instance axi_spi_engine axi_1
-  ad_ip_parameter axi_1 CONFIG.DATA_WIDTH 8
+  ad_ip_parameter axi_1 CONFIG.DATA_WIDTH 32
   ad_ip_parameter axi_1 CONFIG.NUM_OFFLOAD 1
 
   ad_ip_instance spi_engine_offload offload
-  ad_ip_parameter offload CONFIG.DATA_WIDTH 8
+  ad_ip_parameter offload CONFIG.DATA_WIDTH 32
   ad_ip_parameter offload CONFIG.ASYNC_TRIG 1
 
   ad_ip_instance spi_engine_interconnect interconnect
-  ad_ip_parameter interconnect CONFIG.DATA_WIDTH 8
-
-  # to convert the 8bit AXI stream to 24bit AXI stream
-  ad_ip_instance axis_dwidth_converter m_axis_samples_24
-  ad_ip_parameter m_axis_samples_24 CONFIG.M_TDATA_NUM_BYTES 3
-
-  # upscale the data to 32bit, samples should be multiple of 16bit
-  ad_ip_instance util_axis_upscale axis_upscaler
-  ad_ip_parameter axis_upscaler CONFIG.NUM_OF_CHANNELS 1
-  ad_ip_parameter axis_upscaler CONFIG.DATA_WIDTH 24
-  ad_ip_parameter axis_upscaler CONFIG.UDATA_WIDTH 32
-  ad_connect axis_upscaler/dfmt_enable GND
-  ad_connect axis_upscaler/dfmt_type GND
-  ad_connect axis_upscaler/dfmt_se GND
-
+  ad_ip_parameter interconnect CONFIG.DATA_WIDTH 32
+  
   ad_connect axi_1/spi_engine_offload_ctrl0 offload/spi_engine_offload_ctrl
   ad_connect offload/spi_engine_ctrl interconnect/s0_ctrl
   ad_connect axi_1/spi_engine_ctrl interconnect/s1_ctrl
   ad_connect interconnect/m_ctrl execution/ctrl
-  ad_connect offload/offload_sdi m_axis_samples_24/S_AXIS
-  ad_connect m_axis_samples_24/M_AXIS axis_upscaler/s_axis
-  ad_connect axis_upscaler/m_axis M_AXIS_SAMPLE
-
+  ad_connect offload/offload_sdi M_AXIS_SAMPLE
+ 
   ad_connect execution/spi m_spi
 
   ad_connect clk offload/spi_clk
@@ -61,15 +46,11 @@ current_bd_instance /spi_adc
   ad_connect clk axi_1/s_axi_aclk
   ad_connect clk axi_1/spi_clk
   ad_connect clk interconnect/clk
-  ad_connect clk m_axis_samples_24/aclk
-  ad_connect clk axis_upscaler/clk
-
+  
   ad_connect axi_1/spi_resetn offload/spi_resetn
   ad_connect axi_1/spi_resetn execution/resetn
   ad_connect axi_1/spi_resetn interconnect/resetn
-  ad_connect axi_1/spi_resetn m_axis_samples_24/aresetn
-  ad_connect axi_1/spi_resetn axis_upscaler/resetn
-
+ 
   ad_connect drdy offload/trigger
 
   ad_connect resetn axi_1/s_axi_aresetn
