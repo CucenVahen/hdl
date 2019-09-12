@@ -122,9 +122,8 @@ module axi_spi_engine #(
   output offload0_mem_reset,
   output offload0_enable,
   input offload0_enabled,
-  
-  output [31:0] pulse_gen_period,
-  output reg pulse_gen_loadc);
+  output reg [31:0] pulse_gen_period = 'h00,
+  output reg pulse_gen_load);
 
   localparam PCORE_VERSION = 'h010071;
   localparam S_AXI = 0;
@@ -172,8 +171,6 @@ module axi_spi_engine #(
   // Scratch register
   reg [31:0] up_scratch = 'h00;
   
-  reg [31:0] pulse_period_reg = 'h00;
-
   reg  [7:0] sync_id = 'h00;
   reg        sync_id_pending = 1'b0;
   
@@ -285,13 +282,12 @@ module axi_spi_engine #(
   reg offload0_mem_reset_reg;
   wire offload0_enabled_s;
 
-  assign pulse_gen_period = pulse_period_reg;
-
+  
   always @(posedge clk) begin
     if ((up_waddr_s == 8'h48) && (up_wreq_s == 1'b1)) begin
-      pulse_gen_loadc <= 1'b1;
+      pulse_gen_load <= 1'b1;
     end else begin
-      pulse_gen_loadc <= 1'b0;
+      pulse_gen_load <= 1'b0;
     end
   end
 
@@ -301,14 +297,14 @@ module axi_spi_engine #(
       up_irq_mask <= 'h00;
       offload0_enable_reg <= 1'b0;
       offload0_mem_reset_reg <= 1'b0;
-      pulse_period_reg <= 'h00;
+      pulse_gen_period <= 'h00;
     end else begin
       if (up_wreq_s) begin
         case (up_waddr_s)
           8'h20: up_irq_mask <= up_wdata_s;
           8'h40: offload0_enable_reg <= up_wdata_s[0];
           8'h42: offload0_mem_reset_reg <= up_wdata_s[0];
-          8'h48: pulse_period_reg <= up_wdata_s;
+          8'h48: pulse_gen_period <= up_wdata_s;
         endcase
       end
     end
@@ -340,7 +336,7 @@ module axi_spi_engine #(
       8'h3c: up_rdata_ff <= sdi_fifo_out_data; /* PEEK register */
       8'h40: up_rdata_ff <= {offload0_enable_reg};
       8'h41: up_rdata_ff <= {offload0_enabled_s};
-      8'h48: up_rdata_ff <= pulse_period_reg;
+      8'h48: up_rdata_ff <= pulse_gen_period;
       default: up_rdata_ff <= 'h00;
     endcase
   end
